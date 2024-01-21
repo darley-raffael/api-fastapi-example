@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from app.users.schemas import Message, UserDB, UserList, UserSchemaReq, UserSchemaRes
+from app.schemas import Message, UserDB, UserList, UserSchemaReq, UserSchemaRes
+from app.settings import Settings
 
 
 app = FastAPI()
@@ -45,3 +46,11 @@ async def delete_user(user_id: int):
     del database[user_id - 1]
 
     return {"detail": "User deleted"}
+
+
+settings = Settings()
+
+
+@app.get("/info")
+async def info():
+    return {"database_name": settings.DATABASE_URL}
