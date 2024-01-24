@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, HTTPException
+from app.security import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from app.models import User
 from sqlalchemy import select
@@ -47,30 +48,33 @@ async def get_users(
 
 @app.patch("/users/{user_id}", response_model=UserSchemaRes)
 async def update_user(
-    user_id: int, user: UserSchemaReq, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserSchemaReq,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ):
-    db_user = session.scalar(select(User).where(User.id == user_id))
+    if current_user.id != user_id:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    db_user.username = user.username
-    db_user.email = user.email
-    db_user.password = password_hash(user.password)
+    current_user.username = user.username
+    current_user.email = user.email
+    current_user.password = password_hash(user.password)
     session.commit()
-    session.refresh(db_user)
+    session.refresh(current_user)
 
-    return db_user
+    return current_user
 
 
 @app.delete("/users/{user_id}", response_model=Message)
-async def delete_user(user_id: int, session: Session = Depends(get_session)):
-    db_user = session.scalar(select(User).where(User.id == user_id))
+async def delete_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
+):
+    if current_user.id != user_id:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
 
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    session.delete(db_user)
+    session.delete(current_user)
     session.commit()
 
     return {"detail": "User deleted"}

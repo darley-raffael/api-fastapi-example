@@ -38,9 +38,10 @@ def test_get_list_users(client, user):
     assert response.json() == {"users": [user_schema]}
 
 
-def test_update_user(client, user):
+def test_update_user(client, user, token):
     response = client.patch(
-        "/users/1",
+        f"/users/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
         json={"username": "Raffa", "email": "raffa@email.com", "password": "secret"},
     )
 
@@ -48,26 +49,29 @@ def test_update_user(client, user):
     assert response.json() == {"id": 1, "username": "Raffa", "email": "raffa@email.com"}
 
 
-def test_update_user_not_found(client, user):
+def test_update_user_not_found(client, user, token):
     response = client.patch(
         "/users/2",
+        headers={"Authorization": f"Bearer {token}"},
         json={"username": "Raffa", "email": "raffa@email.com", "password": "secret"},
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 400
 
 
-def test_delete_user(client, user):
-    response = client.delete("/users/1")
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f"/users/{user.id}", headers={"Authorization": f"Bearer {token}"}
+    )
 
     assert response.status_code == 200
     assert response.json() == {"detail": "User deleted"}
 
 
-def test_delete_user_not_found(client, user):
-    response = client.delete("/users/2")
+def test_delete_user_not_found(client, user, token):
+    response = client.delete("/users/2", headers={"Authorization": f"Bearer {token}"})
 
-    assert response.status_code == 404
+    assert response.status_code == 400
 
 
 def test_generate_access_token(client, user):
