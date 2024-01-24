@@ -68,3 +68,15 @@ def test_delete_user_not_found(client, user):
     response = client.delete("/users/2")
 
     assert response.status_code == 404
+
+
+def test_generate_access_token(client, user):
+    response = client.post(
+        "/token", data={"username": user.email, "password": user.clean_password}
+    )
+
+    token = response.json()
+
+    assert response.status_code == 200
+    assert "access_token" in token
+    assert "token_type" in token
