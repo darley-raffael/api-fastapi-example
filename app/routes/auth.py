@@ -1,18 +1,17 @@
 from typing import Annotated
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as Se
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from app.database import get_session
 from app.models import User
 from app.schemas import Token
-from app.security import create_access_token, password_verify
-
-OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
-Session = Annotated[Session, Depends(get_session)]
-
+from app.security import create_access_token, get_current_user, password_verify
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
+Session = Annotated[Se, Depends(get_session)]
 
 
 @router.post("/token", response_model=Token)
@@ -30,3 +29,10 @@ async def login_for_access_token(
 
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/refresh_token", response_model=Token)
+async def refresh_access_token(user: User = Depends(get_current_user)):
+    new_access_token = create_access_token(data={"sub": user.email})
+
+    return {"access_token": new_access_token, "token_type": "bearer"}

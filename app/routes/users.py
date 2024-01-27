@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as Se
 from sqlalchemy import select
 from app.database import get_session
 from app.models import User
@@ -8,14 +8,14 @@ from app.models import User
 from app.schemas import Message, UserList, UserSchemaReq, UserSchemaRes
 from app.security import get_current_user, password_hash
 
-Session = Annotated[Session, Depends(get_session)]
-CurrentUser = Annotated[User, Depends(get_current_user)]
-
 router = APIRouter(prefix="/users", tags=["users"])
+
+Session = Annotated[Se, Depends(get_session)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("/", status_code=201, response_model=UserSchemaRes)
-async def create_user(user: UserSchemaReq, session: Session):
+async def create_user(user: UserSchemaReq, session: Session):  # type: ignore
     db_user = session.scalar(select(User).where(User.username == user.username))
 
     if db_user:
